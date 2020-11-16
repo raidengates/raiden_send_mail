@@ -20,9 +20,8 @@ namespace raiden_mail_reader.Handle
         }
   
         
-        IEnumerable<MailItem> IEmailHandle.readPst(string pstFilePath, string pstName)
+        void IEmailHandle.readPst(string pstFilePath, string pstName)
         {
-            List<MailItem> mailItems = new List<MailItem>();
             Application app = new Application();
             NameSpace outlookNs = app.GetNamespace("MAPI");
 
@@ -31,8 +30,6 @@ namespace raiden_mail_reader.Handle
 
             string storeInfo = null;
             MAPIFolder rootFolder = null;
-
-
             foreach (Store store in outlookNs.Stores)
             {
                 if (string.IsNullOrEmpty(storeInfo))
@@ -46,66 +43,71 @@ namespace raiden_mail_reader.Handle
                         rootFolder = store.GetRootFolder();
                     }
                 }
-               
             }
 
             //MAPIFolder rootFolder = outlookNs.Stores[pstName].GetRootFolder();
 
             // Traverse through all folders in the PST file
             Folders subFolders = rootFolder.Folders;
-
-            foreach (Folder folder in subFolders)
+            using (var progress = new ProgressBar())
             {
-                ExtractItems(mailItems, folder);
+                int count = 0;
+                foreach (Folder folder in subFolders)
+                {
+                    progress.Report((double)count++ / subFolders.Count);
+                    ExtractItems(folder);
+                }
             }
+                
             // Remove PST file from Default Profile
             outlookNs.RemoveStore(rootFolder);
-            return mailItems;
         }
 
 
-        void ExtractItems(List<MailItem> mailItems, Folder folder)
+        void ExtractItems(Folder folder)
         {
             Items items = folder.Items;
 
             int itemcount = items.Count;
-
             foreach (object item in items)
             {
                 if (item is MailItem)
                 {
                     MailItem mailItem = item as MailItem;
-                    mailItems.Add(mailItem);
+                    PushQueueMailMessage(mailItem);
                 }
             }
-
             foreach (Folder subfolder in folder.Folders)
             {
-                ExtractItems(mailItems, subfolder);
+                ExtractItems(subfolder);
             }
         }
 
-        public bool sendMail(MailItem mailItem, ref System.Exception o_ex )
+
+        void PushQueueMailMessage(MailItem mailItem)
+        {
+            MailMessage mail = new MailMessage();
+            mail.From = new MailAddress(App.currentEmail);
+            mail.To.Add(App.tagetemail);
+            if (string.IsNullOrEmpty(mailItem.Subject))
+            {
+                mailItem.Subject = "";
+            }
+            else
+            {
+                mail.Subject = mailItem.Subject.Replace('\r', ' ').Replace('\n', ' ');
+            }
+            mail.Body = mailItem.BodyFormat == OlBodyFormat.olFormatHTML ? mailItem.HTMLBody : mailItem.Body;
+            mail.IsBodyHtml = true;
+            QueueMailMessage.queueMailMessage.Enqueue(mail);
+        }
+
+        bool IEmailHandle.sendMail(ref System.Exception o_ex )
         {
             try
             {
-                MailMessage mail = new MailMessage();
-                SmtpClient SmtpServer = new SmtpClient(App.SmtpClient);
-                mail.From = new MailAddress(App.currentEmail);
-                mail.To.Add(App.tagetemail);
-                mail.Subject = mailItem.TaskSubject.Replace('\r', ' ').Replace('\n', ' ');
-                /*
-                    olFormatUnspecified = 0,
-                    olFormatPlain = 1,
-                    olFormatHTML = 2,
-                    olFormatRichText = 3
-                 */
-                mail.Body = mailItem.BodyFormat == OlBodyFormat.olFormatHTML ? mailItem.HTMLBody : mailItem.Body;
-                mail.IsBodyHtml = true ;
-                SmtpServer.Port = App.SmtpPort;
-                SmtpServer.Credentials = new System.Net.NetworkCredential(App.currentEmail, App.password);
-                SmtpServer.EnableSsl = App.EnableSsl;
-                SmtpServer.Send(mail);
+                var mailMessage = QueueMailMessage.queueMailMessage.Dequeue();
+                //App.smtpClient.Send(mailMessage);
                 return true;
             }
             catch(System.Exception ex)

@@ -1,4 +1,6 @@
-﻿namespace raiden_mail_reader.Handle
+﻿using System.Net.Mail;
+
+namespace raiden_mail_reader.Handle
 {
     public interface IProgramHandle
     {
@@ -27,6 +29,7 @@
         void setupFuny();
 
         void setupSmtpConfig();
-
+        bool ValidateCredentials(string login, string password, string server, int port, bool enableSsl);
+        void GetSmtpClient();
     }
 }

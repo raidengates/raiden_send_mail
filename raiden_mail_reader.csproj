@@ -22,8 +22,14 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
+    <SupportUrl>https://github.com/raidengates/raiden_send_mail/tree/main</SupportUrl>
+    <ErrorReportUrl>https://github.com/raidengates/raiden_send_mail/issues</ErrorReportUrl>
+    <TargetCulture>vi</TargetCulture>
+    <ProductName>rmail</ProductName>
+    <PublisherName>rmail</PublisherName>
+    <SuiteName>rmail</SuiteName>
     <AutorunEnabled>true</AutorunEnabled>
-    <ApplicationRevision>2</ApplicationRevision>
+    <ApplicationRevision>5</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -60,6 +66,9 @@
   <PropertyGroup>
     <SignManifests>true</SignManifests>
   </PropertyGroup>
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Office.Interop.Outlook, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Office.Interop.Outlook.15.0.4797.1003\lib\net20\Microsoft.Office.Interop.Outlook.dll</HintPath>
@@ -79,7 +88,11 @@
     <Compile Include="Common\PrintMessage.cs" />
     <Compile Include="Common\ProgressBar.cs" />
     <Compile Include="Common\ServiceLocator.cs" />
+    <Compile Include="Common\SmtpConnectorBase.cs" />
+    <Compile Include="Common\SmtpConnectorWithoutSsl.cs" />
+    <Compile Include="Common\SmtpConnectorWithSsl.cs" />
     <Compile Include="Entity\App.cs" />
+    <Compile Include="Entity\QueueMailMessage.cs" />
     <Compile Include="Handle\EmailHandle.cs" />
     <Compile Include="Handle\IEmailHandle.cs" />
     <Compile Include="Handle\IProgramHandle.cs" />

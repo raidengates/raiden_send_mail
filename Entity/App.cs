@@ -1,6 +1,7 @@
 ﻿using raiden_mail_reader.Handle;
 using System;
 using System.CodeDom;
+using System.Net.Mail;
 using System.Reflection;
 
 namespace raiden_mail_reader.Entity
@@ -63,6 +64,8 @@ namespace raiden_mail_reader.Entity
         public static int SmtpPort { get; set; }
 
         public static bool EnableSsl { get; set; }
+
+        public static SmtpClient smtpClient { get; set; }
     }
 }
 

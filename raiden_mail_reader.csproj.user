@@ -15,5 +15,9 @@
     <StartArguments>-f=net.pst -ce=graiden.gr%40gmail.com -te=vuvh%40qasol.net -pw=raiden%402018</StartArguments>
     <StartAction>Project</StartAction>
     <StartProgram>C:\Windows\System32\cmd.exe</StartProgram>
+    <EnableUnmanagedDebugging>true</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup>
+    <EnableSecurityDebugging>false</EnableSecurityDebugging>
   </PropertyGroup>
 </Project>

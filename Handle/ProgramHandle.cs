@@ -4,6 +4,9 @@ using raiden_mail_reader.Entity;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Text;
 
 namespace raiden_mail_reader.Handle
 {
@@ -136,7 +139,6 @@ namespace raiden_mail_reader.Handle
                         "Méo có lựa chọn dị vậy nhé.".WriteMessage();
                     }
                 } while (isSmtpPort);
-                App.SmtpPort = 587;
                 App.EnableSsl = true;
             }else if (number_input == 2)
             {
@@ -161,6 +163,60 @@ namespace raiden_mail_reader.Handle
                 App.EnableSsl = true;
             }
         }
+
+        bool IProgramHandle.ValidateCredentials(string login, string password, string server, int port, bool enableSsl)
+        {
+            SmtpConnectorBase connector;
+            if (enableSsl)
+            {
+                connector = new SmtpConnectorWithSsl(server, port);
+            }
+            else
+            {
+                connector = new SmtpConnectorWithoutSsl(server, port);
+            }
+
+            if (!connector.CheckResponse(220))
+            {
+                return false;
+            }
+
+            connector.SendData($"HELO {Dns.GetHostName()}{SmtpConnectorBase.EOF}");
+            if (!connector.CheckResponse(250))
+            {
+                return false;
+            }
+
+            connector.SendData($"AUTH LOGIN{SmtpConnectorBase.EOF}");
+            if (!connector.CheckResponse(334))
+            {
+                return false;
+            }
+
+            connector.SendData(Convert.ToBase64String(Encoding.UTF8.GetBytes($"{login}")) + SmtpConnectorBase.EOF);
+            if (!connector.CheckResponse(334))
+            {
+                return false;
+            }
+
+            connector.SendData(Convert.ToBase64String(Encoding.UTF8.GetBytes($"{password}")) + SmtpConnectorBase.EOF);
+            if (!connector.CheckResponse(235))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        void IProgramHandle.GetSmtpClient()
+        {
+            SmtpClient SmtpServer = new SmtpClient(App.SmtpClient);
+            SmtpServer.Port = App.SmtpPort;
+            SmtpServer.Credentials = new System.Net.NetworkCredential(App.currentEmail, App.password);
+            SmtpServer.EnableSsl = App.EnableSsl;
+            App.smtpClient = SmtpServer;
+        }
+
 
         protected override Func<IProgramHandle> GetFactory() => () => new ProgramHandle();
     }

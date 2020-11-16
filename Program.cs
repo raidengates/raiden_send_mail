@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>
 /// mail -f=net.pst -ce=graiden.gr@gmail.com -te=vuvh@qasol.net -pw=xxx
@@ -17,9 +18,9 @@ namespace raiden_mail_reader
     public class Program
     {
         public static string prefix { get; set; }
-        static List<MailItem> MailItem = new List<MailItem>();
 
         static List<System.Exception> exceptions = new List<System.Exception>();
+
         static void Main(string[] args)
         {
             ArgsProviders.args = args;
@@ -31,28 +32,33 @@ namespace raiden_mail_reader
             ProgramHandle.Instance.setupSmtpConfig();
 
             Console.Clear();
-            "Bắt đầu giải nén file!".WriteMessage();
+            var isConnect = ProgramHandle.Instance.ValidateCredentials(App.currentEmail, App.password, App.SmtpClient, App.SmtpPort, App.EnableSsl);
 
-            using (var progress = new ProgressBar())
+            if (!isConnect)
             {
-                progress.Report(1);
-                MailItem = EmailHandle.Instance.readPst(Path.Combine(App.path, "net.pst"), "net.pst").ToList();
+                "Méo đăng nhập đực!".WriteMessage();
+                return;
             }
+            ProgramHandle.Instance.GetSmtpClient();
+
+            Console.Clear();
+            "Bắt đầu giải nén file!".WriteMessage();
+            EmailHandle.Instance.readPst(Path.Combine(App.path, "net.pst"), "net.pst");
+
+            var max = QueueMailMessage.queueMailMessage.Count();
             using (var progress = new ProgressBar())
             {
-                foreach (var item in MailItem.Select((value, i) => new { i, value }))
-                {
-                    var ValueMail = item.value;
-                    var index = item.i;
-                    progress.Report((double)index / MailItem.Count());
+                do {
+                    progress.Report((double)QueueMailMessage.queueMailMessage.Count() / max);
                     System.Exception o_ex = new System.Exception();
-                    var isSend = EmailHandle.Instance.sendMail(ValueMail, ref o_ex);
+                    var isSend = EmailHandle.Instance.sendMail(ref o_ex);
                     if (!isSend)
                     {
                         exceptions.Add(o_ex);
                     }
-                }
+                } while (QueueMailMessage.queueMailMessage.Count > 0);
             }
+
             Console.Clear();
             if (exceptions.Count > 0)
             {

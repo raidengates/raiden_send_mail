@@ -10,14 +10,13 @@ namespace raiden_mail_reader.Handle
         /// </summary>
         /// <param name="pstFilePath">tên đường dẫn</param>
         /// <param name="pstName">tên file cần lấy </param>
-        /// <returns></returns>
-        IEnumerable<MailItem> readPst(string pstFilePath, string pstName);
+        void readPst(string pstFilePath, string pstName);
 
         /// <summary>
         /// Gửi mail nè.
         /// </summary>
         /// <param name="mailItem"></param>
         /// <returns></returns>
-        bool sendMail(MailItem mailItem, ref System.Exception o_ex);
+        bool sendMail(ref System.Exception o_ex);
     }
 }
