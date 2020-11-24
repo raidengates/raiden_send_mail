@@ -32,20 +32,23 @@ namespace raiden_mail_reader
             ProgramHandle.Instance.setupSmtpConfig();
 
             Console.Clear();
-            var isConnect = ProgramHandle.Instance.ValidateCredentials(App.currentEmail, App.password, App.SmtpClient, App.SmtpPort, App.EnableSsl);
+            //var isConnect = ProgramHandle.Instance.ValidateCredentials(App.currentEmail, App.password, App.SmtpClient, App.SmtpPort, App.EnableSsl);
 
-            if (!isConnect)
-            {
-                "Méo đăng nhập đực!".WriteMessage();
-                return;
-            }
+            //if (!isConnect)
+            //{
+            //    "Méo đăng nhập đực!".WriteMessage();
+            //    return;
+            //}
             ProgramHandle.Instance.GetSmtpClient();
+            "Đăng nhập thành công!".WriteMessage();
 
             Console.Clear();
             "Bắt đầu giải nén file!".WriteMessage();
             EmailHandle.Instance.readPst(Path.Combine(App.path, "net.pst"), "net.pst");
 
+            Console.Clear();
             var max = QueueMailMessage.queueMailMessage.Count();
+
             using (var progress = new ProgressBar())
             {
                 do {

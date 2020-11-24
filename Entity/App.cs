@@ -62,6 +62,8 @@ namespace raiden_mail_reader.Entity
         public static string SmtpClient { get; set; }
 
         public static int SmtpPort { get; set; }
+        
+        public static int SmtpPortout { get; set; }
 
         public static bool EnableSsl { get; set; }
 

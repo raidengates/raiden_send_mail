@@ -2,13 +2,8 @@
 using raiden_mail_reader.Common;
 using raiden_mail_reader.Entity;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Mail;
-#pragma warning disable CS0105 // The using directive for 'System' appeared previously in this namespace
-using System;
-#pragma warning restore CS0105 // The using directive for 'System' appeared previously in this namespace
 namespace raiden_mail_reader.Handle
 {
     class EmailHandle : ServiceLocator<IEmailHandle, EmailHandle>, IEmailHandle
@@ -18,8 +13,8 @@ namespace raiden_mail_reader.Handle
         {
             return () => new EmailHandle();
         }
-  
-        
+
+
         void IEmailHandle.readPst(string pstFilePath, string pstName)
         {
             Application app = new Application();
@@ -58,7 +53,7 @@ namespace raiden_mail_reader.Handle
                     ExtractItems(folder);
                 }
             }
-                
+
             // Remove PST file from Default Profile
             outlookNs.RemoveStore(rootFolder);
         }
@@ -86,31 +81,64 @@ namespace raiden_mail_reader.Handle
 
         void PushQueueMailMessage(MailItem mailItem)
         {
-            MailMessage mail = new MailMessage();
-            mail.From = new MailAddress(App.currentEmail);
-            mail.To.Add(App.tagetemail);
-            if (string.IsNullOrEmpty(mailItem.Subject))
-            {
-                mailItem.Subject = "";
-            }
-            else
-            {
-                mail.Subject = mailItem.Subject.Replace('\r', ' ').Replace('\n', ' ');
-            }
-            mail.Body = mailItem.BodyFormat == OlBodyFormat.olFormatHTML ? mailItem.HTMLBody : mailItem.Body;
-            mail.IsBodyHtml = true;
-            QueueMailMessage.queueMailMessage.Enqueue(mail);
+            QueueMailMessage.queueMailMessage.Enqueue(mailItem);
         }
 
-        bool IEmailHandle.sendMail(ref System.Exception o_ex )
+        bool IEmailHandle.sendMail(ref System.Exception o_ex)
         {
             try
             {
-                var mailMessage = QueueMailMessage.queueMailMessage.Dequeue();
-                //App.smtpClient.Send(mailMessage);
+                var mailItem = QueueMailMessage.queueMailMessage.Dequeue();
+
+                using (MailMessage mail = new MailMessage())
+                {
+                    mail.From = new MailAddress(App.currentEmail);
+                    mail.To.Add(App.tagetemail);
+                    if (string.IsNullOrEmpty(mailItem.Subject))
+                    {
+                        mailItem.Subject = "";
+                    }
+                    else
+                    {
+                        mail.Subject = mailItem.Subject.Replace('\r', ' ').Replace('\n', ' ');
+                    }
+                    mail.Body = mailItem.BodyFormat == OlBodyFormat.olFormatHTML ? mailItem.HTMLBody : mailItem.Body;
+
+
+
+                    for (int i = 1; i < mailItem.Attachments.Count; i++)
+                    {
+                        var att = mailItem.Attachments;
+                        var FileAtachment = @"D:\TestFileSave\" + mailItem.Attachments[i].FileName;
+                        mailItem.Attachments[i].SaveAsFile(FileAtachment);
+
+                        if (File.Exists(FileAtachment))
+                        {
+                             mailItem.Attachments.Add(FileAtachment, Microsoft.Office.Interop.Outlook.OlAttachmentType.olByValue, Type.Missing, Type.Missing);
+                        }
+                    }
+
+                    mail.IsBodyHtml = true;
+
+                    try
+                    {
+                        using (SmtpClient SmtpServer = new SmtpClient(App.SmtpClient))
+                        {
+                            SmtpServer.Port = App.SmtpPort;
+                            SmtpServer.Credentials = new System.Net.NetworkCredential(App.currentEmail, App.password);
+                            SmtpServer.EnableSsl = false;
+                            SmtpServer.Send(mail);
+                        }
+                    }
+                    catch (System.Exception e)
+                    {
+                        o_ex = e;
+                        return false;
+                    }
+                }
                 return true;
             }
-            catch(System.Exception ex)
+            catch (System.Exception ex)
             {
                 o_ex = ex;
                 return false;

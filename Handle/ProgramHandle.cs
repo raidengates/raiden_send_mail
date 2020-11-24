@@ -139,6 +139,9 @@ namespace raiden_mail_reader.Handle
                         "Méo có lựa chọn dị vậy nhé.".WriteMessage();
                     }
                 } while (isSmtpPort);
+
+                
+
                 App.EnableSsl = true;
             }else if (number_input == 2)
             {
@@ -162,6 +165,7 @@ namespace raiden_mail_reader.Handle
 
                 App.EnableSsl = true;
             }
+           
         }
 
         bool IProgramHandle.ValidateCredentials(string login, string password, string server, int port, bool enableSsl)
@@ -212,9 +216,15 @@ namespace raiden_mail_reader.Handle
         {
             SmtpClient SmtpServer = new SmtpClient(App.SmtpClient);
             SmtpServer.Port = App.SmtpPort;
+            App.SmtpPortout = 25;
             SmtpServer.Credentials = new System.Net.NetworkCredential(App.currentEmail, App.password);
-            SmtpServer.EnableSsl = App.EnableSsl;
+            //SmtpServer.EnableSsl = App.EnableSsl;
+            SmtpServer.EnableSsl = false;
+
+
+
             App.smtpClient = SmtpServer;
+            
         }
 
 
